@@ -1,3 +1,60 @@
+2016.2.3
+- beta testing nhl.tv overhaul
+
+2016.1.29
+- Added support for addition camera angles (i.e. Rogers Cams) *most games don't offer these*
+- Added 5000kbps support for full and condensed archived games
+- Convert local date to eastern when calling score notifications
+- Fixed bug that caused score notifications to crash if no games were scheduled for the day
+- Added audio and video stream info for display purposes
+
+2016.1.20
+- Favorite team color uses teams dominant color for highlighting
+- Fixed favorite team bugs for certain teams
+- Set default view mode for quick picks to media info 1
+- Added previous and next icons
+
+2016.1.16
+*** Big thanks to mcruise40 for adding the following features ***
+- Added ability to choose team naming style
+- Added ability to choose time format
+- Added ability to hide spoilers only for the favorite team
+- favorite team will be in red in order to stick out even more :-)
+- if no spoilers set to true, games decided in OT or SO will be shown as FINAL instead of FINAL (OT) or FINAL (SO)
+
+2015.12.30
+- Added team name to the two New York teams to distinguish them in the list
+- Added ability to choose favorite team, so that there list title will be in bold in order to stick out more
+- Bumped python version
+- Added source to addon.xml
+
+2015.10.29
+- Minor Bug fix
+
+2015.10.28
+- Added user settings for seconds to display notifications
+
+2015.10.27.2
+- Fix notifications bug attempt #2
+
+2015.10.27.1
+- Fix notifications bug
+
+2015.10.27
+- Organized settings into groups
+- Code cleanup / organization
+- Added Score notifications option under settings
+
+2015.10.21.1
+- Added game images
+
+2015.10.21
+- Convert game start times from eastern to local time
+
+2015.10.16
+- Added Quick Picks Section
+- Added highlights and condensed options for archive games
+
 2015.10.15
 - Added Rogers login support
 - Fixed default quality setting bug
