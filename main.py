@@ -358,6 +358,7 @@ def fetchStream(game_id, content_id,event_id):
         msg = json_source['status_message']
         dialog = xbmcgui.Dialog() 
         ok = dialog.ok('Error Fetching Stream', msg)
+        sys.exit()
 
    
     epoch_time_now = str(int(round(time.time()*1000)))
@@ -387,34 +388,38 @@ def fetchStream(game_id, content_id,event_id):
     media_auth = ''
 
     if json_source['status_code'] == 1:
-        stream_url = json_source['user_verified_event'][0]['user_verified_content'][0]['user_verified_media_item'][0]['url']    
-        media_auth = str(json_source['session_info']['sessionAttributes'][0]['attributeName']) + "=" + str(json_source['session_info']['sessionAttributes'][0]['attributeValue'])
+        if json_source['user_verified_event'][0]['user_verified_content'][0]['user_verified_media_item'][0]['blackout_status']['status'] == 'BlackedOutStatus':
+            msg = "This game was broadcast on television in your area and is not available to view at this time. Please check back after 48 hours."
+            dialog = xbmcgui.Dialog() 
+            ok = dialog.ok('Game Blacked Out', msg) 
+        else:
+            stream_url = json_source['user_verified_event'][0]['user_verified_content'][0]['user_verified_media_item'][0]['url']    
+            media_auth = str(json_source['session_info']['sessionAttributes'][0]['attributeName']) + "=" + str(json_source['session_info']['sessionAttributes'][0]['attributeValue'])
 
-        '''
-        Possibly used to keep too many usage errors at bay???
-        GET https://mf.svc.nhl.com/ws/media/mf/v2.3/key/silk/mediaid/40699103/kid/20106583 HTTP/1.1
-        Host: mf.svc.nhl.com
-        Connection: keep-alive
-        Cookie: mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f3386075f66e69b12f9d9c1edbbf7c4ce3cfb2e67e792013032c3a167920c42f28925bc3c987f6ab3ec425e4af8df799c332151906fad874b3df2127dec5c3458ba9609b52d29ad5d59a271b34dbbe82ebf18027ccb6128e171aa390555f0cce70427974e48fa221226417e482b20e406718108d2911569ccdc69c40e78577dce3aae97f8ae801c482cada83cea211f720232687509311e4cae274f37f7e2493d0755467deabe3fc3b77ca2d5b5d33e3fdcb31eb95c843f52f2648755355bd8ca542ed6f8f7072e50b8ac6bbc1f7e2105c47efbf065af05d98535c7dd0b4296f32a7df5dd3df12234487a421ed510866f005221334fd5dbf9a1916328bf87b89180e51756ca34cb1d37aab1ac20c817b5c37a7f0fa8102a9be94066a53c6998fc3ab6a756d6edf5f0d06ccdaeef62d161ef08920e770a1ed41014a4404cc0e3ee5b35983aead99e097fbc736a63f46687bf99f23c1d7c62249bfe202795c7c80482060e903e625c33faf572dbd7c4dd7646fed97bceb8d94b9dee8c2f419d722e7065ff23454d45fb1a7e8d82f402675d327c18aeee8ebd64a049b17fa460ac36424b1c956526b7fd396d2641d1e24e7479830f7276828e18cce647e38b407dbbf8a50700476d001bebb82e50a1d7214dce96ad2ecc546f9bdaec37; Authorization=eyJhbGciOiJIUzI1NiJ9.eyJzaWdub24tbG9jYXRpb24iOm51bGwsInNpZ25vbi1zZXNzaW9uLWtleSI6bnVsbCwiY2xpZW50SWQiOiJhY3RpdmF0aW9uX25obC12MS4wLjAiLCJ2ZXJpZmljYXRpb25MZXZlbCI6MiwidHlwZSI6IlVzZXIiLCJ1c2VyaWQiOiIxMzM4OTgzIiwidmVyc2lvbiI6InYxLjAiLCJwY19tYXhfcmF0aW5nX3R2IjoiIiwiZXhwaXJlc0F0IjoxNDg2MDUyMjgwMjczLCJpcGlkIjoibmhsR2F0ZXdheUlkOjIwMDcyMDQiLCJzaWdub24tdHlwZSI6bnVsbCwicGNfbWF4X3JhdGluZ19tb3ZpZSI6IiIsImNvbnRleHQiOnt9LCJjcmVhdGVkX2RhdGUiOjE0NTQ1MTYyODAyNzMsImVtYWlsIjoiZXJhY2tuYXBob2JpYUBob3RtYWlsLmNvbSJ9.LV5MJj6ENjDNATGwL6g9EPPM1l8j5Q9SXQi3gmJb6WE
-        Cache-Control: no-cache
-        User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.97 Safari/537.36
-        Accept: */*
-        Accept-Encoding: gzip, deflate, sdch
-        Accept-Language: en-US,en;q=0.8
-        '''
-        url = 'https://mf.svc.nhl.com/ws/media/mf/v2.3/key/silk/mediaid/40699103/kid/20106583'       
-        req = urllib2.Request(url)       
-        req.add_header("Accept", "*/*")
-        req.add_header("Accept-Encoding", "gzip, deflate, sdch")
-        req.add_header("Accept-Language", "en-US,en;q=0.8")                               
-        req.add_header("Cookie", media_auth+"; Authorization="+authorization)
-        req.add_header("User-Agent", UA_PC)
-        req.add_header("Cache-Control", "no-cache")
-        
-        response = urllib2.urlopen(req)
-        
-        response.close()
-
+            '''
+            Possibly used to keep too many usage errors at bay???
+            GET https://mf.svc.nhl.com/ws/media/mf/v2.3/key/silk/mediaid/40699103/kid/20106583 HTTP/1.1
+            Host: mf.svc.nhl.com
+            Connection: keep-alive
+            Cookie: mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f3386075f66e69b12f9d9c1edbbf7c4ce3cfb2e67e792013032c3a167920c42f28925bc3c987f6ab3ec425e4af8df799c332151906fad874b3df2127dec5c3458ba9609b52d29ad5d59a271b34dbbe82ebf18027ccb6128e171aa390555f0cce70427974e48fa221226417e482b20e406718108d2911569ccdc69c40e78577dce3aae97f8ae801c482cada83cea211f720232687509311e4cae274f37f7e2493d0755467deabe3fc3b77ca2d5b5d33e3fdcb31eb95c843f52f2648755355bd8ca542ed6f8f7072e50b8ac6bbc1f7e2105c47efbf065af05d98535c7dd0b4296f32a7df5dd3df12234487a421ed510866f005221334fd5dbf9a1916328bf87b89180e51756ca34cb1d37aab1ac20c817b5c37a7f0fa8102a9be94066a53c6998fc3ab6a756d6edf5f0d06ccdaeef62d161ef08920e770a1ed41014a4404cc0e3ee5b35983aead99e097fbc736a63f46687bf99f23c1d7c62249bfe202795c7c80482060e903e625c33faf572dbd7c4dd7646fed97bceb8d94b9dee8c2f419d722e7065ff23454d45fb1a7e8d82f402675d327c18aeee8ebd64a049b17fa460ac36424b1c956526b7fd396d2641d1e24e7479830f7276828e18cce647e38b407dbbf8a50700476d001bebb82e50a1d7214dce96ad2ecc546f9bdaec37; Authorization=eyJhbGciOiJIUzI1NiJ9.eyJzaWdub24tbG9jYXRpb24iOm51bGwsInNpZ25vbi1zZXNzaW9uLWtleSI6bnVsbCwiY2xpZW50SWQiOiJhY3RpdmF0aW9uX25obC12MS4wLjAiLCJ2ZXJpZmljYXRpb25MZXZlbCI6MiwidHlwZSI6IlVzZXIiLCJ1c2VyaWQiOiIxMzM4OTgzIiwidmVyc2lvbiI6InYxLjAiLCJwY19tYXhfcmF0aW5nX3R2IjoiIiwiZXhwaXJlc0F0IjoxNDg2MDUyMjgwMjczLCJpcGlkIjoibmhsR2F0ZXdheUlkOjIwMDcyMDQiLCJzaWdub24tdHlwZSI6bnVsbCwicGNfbWF4X3JhdGluZ19tb3ZpZSI6IiIsImNvbnRleHQiOnt9LCJjcmVhdGVkX2RhdGUiOjE0NTQ1MTYyODAyNzMsImVtYWlsIjoiZXJhY2tuYXBob2JpYUBob3RtYWlsLmNvbSJ9.LV5MJj6ENjDNATGwL6g9EPPM1l8j5Q9SXQi3gmJb6WE
+            Cache-Control: no-cache
+            User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.97 Safari/537.36
+            Accept: */*
+            Accept-Encoding: gzip, deflate, sdch
+            Accept-Language: en-US,en;q=0.8
+            '''
+            url = 'https://mf.svc.nhl.com/ws/media/mf/v2.3/key/silk/mediaid/40699103/kid/20106583'       
+            req = urllib2.Request(url)       
+            req.add_header("Accept", "*/*")
+            req.add_header("Accept-Encoding", "gzip, deflate, sdch")
+            req.add_header("Accept-Language", "en-US,en;q=0.8")                               
+            req.add_header("Cookie", media_auth+"; Authorization="+authorization)
+            req.add_header("User-Agent", UA_PC)
+            req.add_header("Cache-Control", "no-cache")
+            
+            response = urllib2.urlopen(req)
+            
+            response.close()
     else:
         msg = json_source['status_message']
         dialog = xbmcgui.Dialog() 
