@@ -55,8 +55,8 @@ UA_IPAD = 'Mozilla/5.0 (iPad; CPU OS 8_4 like Mac OS X) AppleWebKit/600.1.4 (KHT
 UA_NHL = 'NHL/2542 CFNetwork/758.2.8 Darwin/15.0.0'
 UA_PC = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.97 Safari/537.36'
 UA_PS3 = 'PS3Application libhttp/4.7.6-000 (CellOS)'
-UA_PS4 = 'PS4Application libhttp/1.000 (PS4) libhttp/3.00 (PlayStation 4)'
-
+UA_PS4 = 'PS4Application libhttp/1.000 (PS4) libhttp/3.15 (PlayStation 4)'
+    
 
 def find(source,start_str,end_str):    
     start = source.find(start_str)
@@ -128,9 +128,9 @@ def get_params():
 
 
 
-def addStream(name,link_url,title,game_id,video_items,icon=None,fanart=None,info=None,video_info=None,audio_info=None):
+def addStream(name,link_url,title,game_id,epg,icon=None,fanart=None,info=None,video_info=None,audio_info=None):
     ok=True
-    u=sys.argv[0]+"?url="+urllib.quote_plus(link_url)+"&mode="+str(104)+"&name="+urllib.quote_plus(name)+"&game_id="+urllib.quote_plus(str(game_id))+"&video_items="+urllib.quote_plus(str(video_items))
+    u=sys.argv[0]+"?url="+urllib.quote_plus(link_url)+"&mode="+str(104)+"&name="+urllib.quote_plus(name)+"&game_id="+urllib.quote_plus(str(game_id))+"&epg="+urllib.quote_plus(str(epg))
     
     if icon != None:
         liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=icon) 
@@ -263,10 +263,10 @@ def getFavTeamColor():
 def getAudioVideoInfo():
     #SD (800 kbps)|SD (1600 kbps)|HD (3000 kbps)|HD (5000 kbps)
     if QUALITY == 'SD (800 kbps)':        
+        video_info = { 'codec': 'h264', 'width' : 512, 'height' : 288, 'aspect' : 1.78 }        
+    elif QUALITY == 'SD (1200 kbps)':
         video_info = { 'codec': 'h264', 'width' : 640, 'height' : 360, 'aspect' : 1.78 }        
-    elif QUALITY == 'SD (1600 kbps)':
-        video_info = { 'codec': 'h264', 'width' : 960, 'height' : 540, 'aspect' : 1.78 }        
-    elif QUALITY == 'HD (3000 kbps)' or QUALITY == 'HD (5000 kbps)':
+    elif QUALITY == 'HD (2500 kbps)' or QUALITY == 'HD (3500 kbps)' or QUALITY == 'HD (5000 kbps)':
         video_info = { 'codec': 'h264', 'width' : 1280, 'height' : 720, 'aspect' : 1.78 }        
 
     audio_info = { 'codec': 'aac', 'language': 'en', 'channels': 2 }

@@ -50,7 +50,7 @@ def todaysGames(game_day):
     req.add_header('Connection', 'keep-alive')
     req.add_header('Accept', '*/*')
     req.add_header('Origin', 'https://www.nhl.com')
-    req.add_header('User-Agent', UA_NHL)
+    req.add_header('User-Agent', UA_PC)
     req.add_header('Referer', 'https://www.nhl.com/tv?&affiliateId=NHLTVLOGIN')
     req.add_header('Accept-Language', 'en-US,en;q=0.8')
     req.add_header('Accept-Encoding', 'deflate')
@@ -79,7 +79,7 @@ def todaysGames(game_day):
 
     try:
         for game in json_source['dates'][0]['games']:        
-            createGameStream(game)
+            createGameListItem(game)
     except:
         pass
     
@@ -87,7 +87,7 @@ def todaysGames(game_day):
     addDir('[B]Next Day >>[/B]','/live',101,NEXT_ICON,FANART,next_day.strftime("%Y-%m-%d"))
 
 
-def createGameStream(game):
+def createGameListItem(game):
     away = game['teams']['away']['team']
     home = game['teams']['home']['team']
     #http://nhl.cdn.neulion.net/u/nhlgc_roku/images/HD/NJD_at_BOS.jpg
@@ -148,11 +148,11 @@ def createGameStream(game):
 
 
     #live_video = game['gameLiveVideo']
-    video_items = json.dumps(game['content']['media']['epg'][0]['items'])
+    epg = json.dumps(game['content']['media']['epg'])
     live_feeds = 0
     archive_feeds = 0
     '''
-    for item in video_items:
+    for item in epg:
 
 
 
@@ -189,21 +189,29 @@ def createGameStream(game):
     
     #Set audio/video info based on stream quality setting
     audio_info, video_info = getAudioVideoInfo()
-    addStream(name,'',title,game_id,video_items,icon,None,None,video_info,audio_info)
+    addStream(name,'',title,game_id,epg,icon,None,None,video_info,audio_info)
 
 
 
-def streamSelect(game_id, video_items):
-    print video_items
-    video_items = json.loads(video_items)
-    
+def streamSelect(game_id, epg):
+    #print epg
+    #0 = NHLTV
+    #1 = Audio
+    #2 = Extended Highlights
+    #3 = Recap
+    epg = json.loads(epg)    
+    full_game_items = epg[0]['items']
+    audio_items = epg[1]['items']
+    highlight_items = epg[2]['items']
+    recap_items = epg[3]['items']
+
     stream_title = []
     content_id = []
     event_id = []
     media_state = []
-    #archive_type = ['Full Game','Condensed','Highlights']
+    archive_type = ['Recap','Extended Highlights','Full Game']    
     #archive_gs = ['dvr','condensed','highlights']
-    archive_gs = ['archive','condensed','highlights']
+    #archive_gs = ['archive','condensed','highlights']
 
     '''
     Video Item Ex. ARCHIVE
@@ -230,8 +238,8 @@ def streamSelect(game_id, video_items):
     "gamePlus" : false
     '''
     
-    if len(video_items) > 0:
-        for item in video_items:
+    if len(full_game_items) > 0:
+        for item in full_game_items:
             media_state.append(item['mediaState'])
             stream_title.append(item['mediaFeedType'].encode('utf-8'))
             content_id.append(item['mediaPlaybackId'])
@@ -246,86 +254,107 @@ def streamSelect(game_id, video_items):
     #Reverse Order for display purposes
     #stream_title.reverse()
     #ft.reverse()
-
-    dialog = xbmcgui.Dialog() 
-    n = dialog.select('Choose Stream', stream_title)
+    print "MEDIA STATE"
+    print media_state
     
-
-    '''
-    n = -1
-    is_highlights = 0
-    if gs != 'highlights':
+    if media_state[0] == 'MEDIA_ARCHIVE':
         dialog = xbmcgui.Dialog() 
-        n = dialog.select('Choose Stream', stream_title)  
-    else:
-        #Make home stream
-        is_highlights = 1
-        gs = 'condensed'
-        n = 0
-    '''
-    # If user selects a stream from the dialog
-    if n > -1:
-        stream_url, media_auth = fetchStream(game_id, content_id[n],event_id[n])
-        #media_auth = 'mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f338607b5d98f2ed6ead08cd6a1bcf2e19f10d29e024a4bca234c1a109b468bf250faa565a1cbc5e0df334e8d5e29ad29741d2346125603140f0a7003a55906116037d14dc440d39fe59a8829cd3eb560928d76f2ddcee3a015f942a516ef5006d02c80b775f88ff32ee7fb23ec9fa467495e3f059519b2bf2efb44a5c033300205ed855668994c9503ba121bdacd28f4080016eec9931353665a430919d8a2bbcc1da3011db9a866bbc89371c59d0a72af0135da62c4946f214c31ce12f5f02a5843e63ab2f709cca8b65b3b152458e523bd6412566562db76ae6e3917ccf8dd96c1c09a02d80f0c45af74abf8e1df7fbdb20fcaf26624e30418286b3d50f446fa94ce4fa870fc15ff99d0068992b18745715f38b47f939c6161593247ddd143ea0239ab65533c951ce45892c04d0f6e410edbdd9d78df07e6ea9c62c06b0df8d1d2dfd0f1afb9f9837056fa5be96dba27293b2d1e22edd4c61eae647957e869ba885ec0a7149070a8a38f9075d2df8f2d068de30456bb1184738425bc5c9cdfc566da704f79bf6f90d73ee7fd0de31cefdcfec0402898d40733039d347d4499f45345e0e3bd26fa0b3609b2d46474a72d4e3ca299001ff41c549c5d1f7ad0d0e58fd1693175111df970dd21bb4a059235afd397a8dbcfec0905bf'
-        #stream_url = 'http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_OTTPIT_M2_HOME_20160203/master_wired_web.m3u8'
-        #media_auth = 'mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f33860786db6d4fe9f572bd0f9ed4d6f1485c5053ba2ce26aaa4855149c199926ede2c1d8b6b51ed25f99333e7873d689f560afc8ba6a2651a53ff9d07614b74bef3e71d801164e74179b435d293a7d6ebd1072a18a5f1c6db62f04b420057f6c773d175668918d75ad3c36e1ffabbc46f9b50e2b94beede308566d37bb4d4ba6636df87e9ccc55219bacbf29dcf93736da0a5915ece5275156f54e4b33299998caa2964020b38f805dfb4055402bff7f37280a3639c904c857c8cc0c16fe359635a24d7aa9f3518fb2eb2c6df6c497f5362f793befddd248c909f4e6ab33bad872ade3a2d3719773558a5411198861cb0d669b16e971e48d6ee0e2e9375ab7b237d95199ecb199ed140ae2da21b539d16e91c0cf626a12ea62246631bb00720f2efdcb475a0774b0d9b54d7234b10fb688fe6b21ff4192dbcaa3fd9d4d84fe28c499ffc3c4bd4fcd760a7a232c4242642e0430305a41e0d99f269718634b00a1666927a070e5980e0755949c148bb87f596d9609cb0a411509c0d43a0e6cdba5bd3b84593d0219efe4492dd4a56cb10a8da34f24bba47a083aac81ecb811ac59673d9380c62ebe4a44557970f6eeb3b6f8a4319f2a4100fc243f5a3769ca713b444b0284fc0a5172ce0c45b0b72092f1b0e1dbe7dcf12ce6004c48'
-        #stream_url = "http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_TORBOS_M2_COMPOSITE_3X_20160203/master_wired_web.m3u8"
-        #stream_url = 'http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_CBJEDM_M2_ISO_3_20160203/master_wired_web.m3u8'
-        if stream_url != '':
-            #SD (800 kbps)|SD (1600 kbps)|HD (3000 kbps)|HD (5000 kbps)        
-            bandwidth = find(QUALITY,'(',' kbps)')
-
-            #Reduce max bandwidth if composite video selected
-            if ('COMPOSITE' in stream_url or 'ISO' in stream_url) and int(bandwidth) >= 5000:
-                    bandwidth = '3500'
-            
-            if media_state[n] == 'MEDIA_ARCHIVE':                
-                #ARCHIVE
-                stream_url = stream_url.replace('master_wired_web.m3u8', bandwidth+'K/'+bandwidth+'_complete-trimmed.m3u8') 
-
-            elif media_state[n] == 'MEDIA_ON':
-                #LIVE    
-                #5000K/5000_slide.m3u8 OR #3500K/3500_complete.m3u8
-                # Slide = Live, Complete = Watch from beginning?
-                stream_url = stream_url.replace('master_wired_web.m3u8', bandwidth+'K/'+bandwidth+'_slide.m3u8') 
-                        
-            
-            cj = cookielib.LWPCookieJar()
-            cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)
-
-            cookies = ''
-            for cookie in cj:            
-                if cookie.name == "Authorization":
-                    cookies = cookies + cookie.name + "=" + cookie.value + "; "
-            stream_url = stream_url + '|User-Agent='+UA_PC+'&Cookie='+cookies+media_auth
-
-            print "STREAM URL: "+stream_url
-
-            listitem = xbmcgui.ListItem(path=stream_url)
-            xbmcplugin.setResolvedUrl(addon_handle, True, listitem)            
+        a = dialog.select('Choose Archive', archive_type)
+        if a < 2:
+            if a == 0:
+                #Recap
+                stream_url = createHighlightStream(recap_items[0]['playbacks'][3]['url'])
+            elif a == 1:
+                #Extended Highlights
+                stream_url = createHighlightStream(highlight_items[0]['playbacks'][3]['url'])
+        elif a == 2:
+            dialog = xbmcgui.Dialog() 
+            n = dialog.select('Choose Stream', stream_title)
+            if n > -1:
+                stream_url, media_auth = fetchStream(game_id, content_id[n],event_id[n])
+                #media_auth = 'mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f338607b5d98f2ed6ead08cd6a1bcf2e19f10d29e024a4bca234c1a109b468bf250faa565a1cbc5e0df334e8d5e29ad29741d2346125603140f0a7003a55906116037d14dc440d39fe59a8829cd3eb560928d76f2ddcee3a015f942a516ef5006d02c80b775f88ff32ee7fb23ec9fa467495e3f059519b2bf2efb44a5c033300205ed855668994c9503ba121bdacd28f4080016eec9931353665a430919d8a2bbcc1da3011db9a866bbc89371c59d0a72af0135da62c4946f214c31ce12f5f02a5843e63ab2f709cca8b65b3b152458e523bd6412566562db76ae6e3917ccf8dd96c1c09a02d80f0c45af74abf8e1df7fbdb20fcaf26624e30418286b3d50f446fa94ce4fa870fc15ff99d0068992b18745715f38b47f939c6161593247ddd143ea0239ab65533c951ce45892c04d0f6e410edbdd9d78df07e6ea9c62c06b0df8d1d2dfd0f1afb9f9837056fa5be96dba27293b2d1e22edd4c61eae647957e869ba885ec0a7149070a8a38f9075d2df8f2d068de30456bb1184738425bc5c9cdfc566da704f79bf6f90d73ee7fd0de31cefdcfec0402898d40733039d347d4499f45345e0e3bd26fa0b3609b2d46474a72d4e3ca299001ff41c549c5d1f7ad0d0e58fd1693175111df970dd21bb4a059235afd397a8dbcfec0905bf'                
+                #stream_url = 'http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_OTTPIT_M2_HOME_20160203/master_wired_web.m3u8'                
+                stream_url = createFullGameStream(stream_url,media_auth,media_state[n])    
+            else:
+                sys.exit()
         else:
             sys.exit()
     else:
-        sys.exit()
+        dialog = xbmcgui.Dialog() 
+        n = dialog.select('Choose Stream', stream_title)
+        if n > -1:
+            stream_url, media_auth = fetchStream(game_id, content_id[n],event_id[n])
+            stream_url = createFullGameStream(stream_url,media_auth,media_state[n])
+            #media_auth = 'mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f338607b5d98f2ed6ead08cd6a1bcf2e19f10d29e024a4bca234c1a109b468bf250faa565a1cbc5e0df334e8d5e29ad29741d2346125603140f0a7003a55906116037d14dc440d39fe59a8829cd3eb560928d76f2ddcee3a015f942a516ef5006d02c80b775f88ff32ee7fb23ec9fa467495e3f059519b2bf2efb44a5c033300205ed855668994c9503ba121bdacd28f4080016eec9931353665a430919d8a2bbcc1da3011db9a866bbc89371c59d0a72af0135da62c4946f214c31ce12f5f02a5843e63ab2f709cca8b65b3b152458e523bd6412566562db76ae6e3917ccf8dd96c1c09a02d80f0c45af74abf8e1df7fbdb20fcaf26624e30418286b3d50f446fa94ce4fa870fc15ff99d0068992b18745715f38b47f939c6161593247ddd143ea0239ab65533c951ce45892c04d0f6e410edbdd9d78df07e6ea9c62c06b0df8d1d2dfd0f1afb9f9837056fa5be96dba27293b2d1e22edd4c61eae647957e869ba885ec0a7149070a8a38f9075d2df8f2d068de30456bb1184738425bc5c9cdfc566da704f79bf6f90d73ee7fd0de31cefdcfec0402898d40733039d347d4499f45345e0e3bd26fa0b3609b2d46474a72d4e3ca299001ff41c549c5d1f7ad0d0e58fd1693175111df970dd21bb4a059235afd397a8dbcfec0905bf'
+            #stream_url = 'http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_OTTPIT_M2_HOME_20160203/master_wired_web.m3u8'
+            #media_auth = 'mediaAuth_v2=6455209108eaa22507b1b305ff7466270d11c4e1da95b07350c56bb10f33860786db6d4fe9f572bd0f9ed4d6f1485c5053ba2ce26aaa4855149c199926ede2c1d8b6b51ed25f99333e7873d689f560afc8ba6a2651a53ff9d07614b74bef3e71d801164e74179b435d293a7d6ebd1072a18a5f1c6db62f04b420057f6c773d175668918d75ad3c36e1ffabbc46f9b50e2b94beede308566d37bb4d4ba6636df87e9ccc55219bacbf29dcf93736da0a5915ece5275156f54e4b33299998caa2964020b38f805dfb4055402bff7f37280a3639c904c857c8cc0c16fe359635a24d7aa9f3518fb2eb2c6df6c497f5362f793befddd248c909f4e6ab33bad872ade3a2d3719773558a5411198861cb0d669b16e971e48d6ee0e2e9375ab7b237d95199ecb199ed140ae2da21b539d16e91c0cf626a12ea62246631bb00720f2efdcb475a0774b0d9b54d7234b10fb688fe6b21ff4192dbcaa3fd9d4d84fe28c499ffc3c4bd4fcd760a7a232c4242642e0430305a41e0d99f269718634b00a1666927a070e5980e0755949c148bb87f596d9609cb0a411509c0d43a0e6cdba5bd3b84593d0219efe4492dd4a56cb10a8da34f24bba47a083aac81ecb811ac59673d9380c62ebe4a44557970f6eeb3b6f8a4319f2a4100fc243f5a3769ca713b444b0284fc0a5172ce0c45b0b72092f1b0e1dbe7dcf12ce6004c48'
+            #stream_url = "http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_TORBOS_M2_COMPOSITE_3X_20160203/master_wired_web.m3u8"
+            #stream_url = 'http://hlslive-l3c.med2.med.nhl.com/ls04/nhl/2016/02/03/NHL_GAME_VIDEO_CBJEDM_M2_ISO_3_20160203/master_wired_web.m3u8'
+        else:
+            sys.exit()
 
+    if stream_url != '':
+        listitem = xbmcgui.ListItem(path=stream_url)
+        xbmcplugin.setResolvedUrl(addon_handle, True, listitem)
+    else:
+        sys.exit()
+        
+
+def createHighlightStream(stream_url):
+    bandwidth = find(QUALITY,'(',' kbps)')
+    #asset_5000k.m3u8
+    stream_url = stream_url.replace('master_wired.m3u8', 'asset_'+bandwidth+'k.m3u8')
+    stream_url = stream_url + '|User-Agent='+UA_PS4
+    print stream_url
+    return stream_url
+
+def createFullGameStream(stream_url, media_auth, media_state):
+    #SD (800 kbps)|SD (1600 kbps)|HD (3000 kbps)|HD (5000 kbps)        
+    bandwidth = find(QUALITY,'(',' kbps)')
+
+    #Reduce max bandwidth if composite video selected
+    if ('COMPOSITE' in stream_url or 'ISO' in stream_url) and int(bandwidth) >= 5000:
+            bandwidth = '3500'
+    
+    if media_state == 'MEDIA_ARCHIVE':                
+        #ARCHIVE
+        stream_url = stream_url.replace('master_wired_web.m3u8', bandwidth+'K/'+bandwidth+'_complete-trimmed.m3u8') 
+
+    elif media_state == 'MEDIA_ON':
+        #LIVE    
+        #5000K/5000_slide.m3u8 OR #3500K/3500_complete.m3u8
+        # Slide = Live, Complete = Watch from beginning?
+        stream_url = stream_url.replace('master_wired_web.m3u8', bandwidth+'K/'+bandwidth+'_slide.m3u8') 
+                
+    
+    cj = cookielib.LWPCookieJar()
+    cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)
+
+    cookies = ''
+    for cookie in cj:            
+        if cookie.name == "Authorization":
+            cookies = cookies + cookie.name + "=" + cookie.value + "; "
+    stream_url = stream_url + '|User-Agent='+UA_PS4+'&Cookie='+cookies+media_auth
+
+    print "STREAM URL: "+stream_url
+    return stream_url
+                
 
 
 def fetchStream(game_id, content_id,event_id):    
     #logout()
     #login()    
    
+    cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))     
+    cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)    
+
+
+    #If authorization cookie is missing or stale, perform login
     authorization = ''
+    for cookie in cj:            
+        if cookie.name == "Authorization" and not cookie.is_expired():            
+            authorization = cookie.value 
 
-    try:
-        cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))     
-        cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)    
-
-        #If authorization cookie is missing or stale, perform login    
-        for cookie in cj:            
-            if cookie.name == "Authorization" and not cookie.is_expired():            
-                authorization = cookie.value 
-    except:
-        pass
 
     if authorization == '':
         login()
@@ -446,51 +475,20 @@ def login():
         settings.setSetting(id='password', value=PASSWORD)
 
    
-    if USERNAME != '' and PASSWORD != '':                
+    if USERNAME != '' and PASSWORD != '':        
         cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))       
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))   
-
-        if ROGERS_SUBSCRIBER == 'true':            
-            #Get Token
-            url = 'https://user.svc.nhl.com/oauth/token?grant_type=client_credentials'
-            req = urllib2.Request(url)       
-            req.add_header("Accept", "application/json")
-            req.add_header("Accept-Encoding", "gzip, deflate, sdch")
-            req.add_header("Accept-Language", "en-US,en;q=0.8")                                           
-            req.add_header("User-Agent", UA_PC)
-            req.add_header("Referer", "https://www.nhl.com/login/rogers")
-            req.add_header("Authorization", "Basic d2ViX25obC12MS4wLjA6MmQxZDg0NmVhM2IxOTRhMThlZjQwYWM5ZmJjZTk3ZTM=")
-          
-            response = urllib2.urlopen(req, '')
-            json_source = json.load(response)   
-            access_token = json_source['access_token']
-            response.close()
-
-            #Login
-            url = 'https://activation-rogers.svc.nhl.com/ws/subscription/flow/rogers.login-check'            
-            login_data = '{"rogerCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
-            req = urllib2.Request(url, data=login_data,
-                  headers={"Accept": "*/*",
-                            "Accept-Encoding": "gzip, deflate",
-                            "Accept-Language": "en-US,en;q=0.8",
-                            "Content-Type": "application/json",                            
-                            "Origin": "https://www.nhl.com",
-                            "Connection": "keep-alive",
-                            "Authorization": access_token,
-                            "Referer": "https://www.nhl.com/login/rogers",
-                            "User-Agent": UA_PC})
-        else:
-            url = 'https://gateway.web.nhl.com/ws/subscription/flow/nhlPurchase.login'
-            login_data = '{"nhlCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
-            req = urllib2.Request(url, data=login_data,
-                  headers={"Accept": "*/*",
-                            "Accept-Encoding": "gzip, deflate",
-                            "Accept-Language": "en-US,en;q=0.8",
-                            "Content-Type": "application/json",                            
-                            "Origin": "https://www.nhl.com",
-                            "Connection": "keep-alive",
-                            "User-Agent": UA_PC})
-
+        url = 'https://gateway.web.nhl.com/ws/subscription/flow/nhlPurchase.login'
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))            
+        
+        login_data = '{"nhlCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
+        req = urllib2.Request(url, data=login_data,
+              headers={"Accept": "*/*",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Accept-Language": "en-US,en;q=0.8",
+                        "Content-Type": "application/json",                            
+                        "Origin": "https://www.nhl.com",
+                        "Connection": "keep-alive",
+                        "User-Agent": UA_PC})
         response = opener.open(req)              
         user_data = response.read()
         response.close()
@@ -561,7 +559,7 @@ name=None
 mode=None
 game_day=None
 game_id=None
-video_items=None
+epg=None
 
 try:
     url=urllib.unquote_plus(params["url"])
@@ -584,7 +582,7 @@ try:
 except:
     pass
 try:
-    video_items=urllib.unquote_plus(params["video_items"])
+    epg=urllib.unquote_plus(params["epg"])
 except:
     pass
 
@@ -603,7 +601,7 @@ elif mode == 101:
     #Used to overwrite current Today's Game list
     todaysGames(game_day)    
 elif mode == 104:
-    streamSelect(game_id, video_items)
+    streamSelect(game_id, epg)
 elif mode == 200:
     search_txt = ''
     dialog = xbmcgui.Dialog()
@@ -624,7 +622,7 @@ elif mode == 300:
     quickPicks()
 
 elif mode == 400:
-    logout()    
+    logout()
 
 elif mode == 999:
     sys.exit()
@@ -632,7 +630,7 @@ elif mode == 999:
 
 if mode == 100:
     xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=False)
-elif mode == 101:
+elif mode == 101 or mode == 400:
     xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=False, updateListing=True)
 else:
     xbmcplugin.endOfDirectory(addon_handle)
