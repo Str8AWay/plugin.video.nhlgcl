@@ -314,16 +314,18 @@ def fetchStream(game_id, content_id,event_id):
     #logout()
     #login()    
    
-    cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))     
-    cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)    
-
-
-    #If authorization cookie is missing or stale, perform login
     authorization = ''
-    for cookie in cj:            
-        if cookie.name == "Authorization" and not cookie.is_expired():            
-            authorization = cookie.value 
 
+    try:
+        cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))     
+        cj.load(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'),ignore_discard=True)    
+
+        #If authorization cookie is missing or stale, perform login    
+        for cookie in cj:            
+            if cookie.name == "Authorization" and not cookie.is_expired():            
+                authorization = cookie.value 
+    except:
+        pass
 
     if authorization == '':
         login()
