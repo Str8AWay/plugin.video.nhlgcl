@@ -296,6 +296,7 @@ def streamSelect(game_id, epg):
     if stream_url != '':
         listitem = xbmcgui.ListItem(path=stream_url)
         xbmcplugin.setResolvedUrl(addon_handle, True, listitem)
+        #logout()
     else:
         sys.exit()
         
@@ -341,8 +342,7 @@ def createFullGameStream(stream_url, media_auth, media_state):
                 
 
 
-def fetchStream(game_id, content_id,event_id):    
-    #logout()
+def fetchStream(game_id, content_id,event_id):        
     #login()    
    
     authorization = ''    
@@ -447,8 +447,9 @@ def fetchStream(game_id, content_id,event_id):
             req.add_header("Accept-Encoding", "gzip, deflate, sdch")
             req.add_header("Accept-Language", "en-US,en;q=0.8")                               
             req.add_header("Cookie", media_auth+"; Authorization="+authorization)
-            req.add_header("User-Agent", UA_PC)
+            req.add_header("User-Agent", UA_PC)            
             req.add_header("Cache-Control", "no-cache")
+            req.add_header("Connection", "keep-alive")
             
             response = urllib2.urlopen(req)
             
@@ -457,8 +458,8 @@ def fetchStream(game_id, content_id,event_id):
         msg = json_source['status_message']
         dialog = xbmcgui.Dialog() 
         ok = dialog.ok('Error Fetching Stream', msg)
-        
-
+       
+    
     return stream_url, media_auth    
 
 
