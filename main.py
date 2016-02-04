@@ -450,7 +450,23 @@ def login():
         cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))       
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))   
 
-        if ROGERS_SUBSCRIBER == 'true':
+        if ROGERS_SUBSCRIBER == 'true':            
+            #Get Token
+            url = 'https://user.svc.nhl.com/oauth/token?grant_type=client_credentials'
+            req = urllib2.Request(url)       
+            req.add_header("Accept", "application/json")
+            req.add_header("Accept-Encoding", "gzip, deflate, sdch")
+            req.add_header("Accept-Language", "en-US,en;q=0.8")                                           
+            req.add_header("User-Agent", UA_PC)
+            req.add_header("Referer", "https://www.nhl.com/login/rogers")
+            req.add_header("Authorization", "Basic d2ViX25obC12MS4wLjA6MmQxZDg0NmVhM2IxOTRhMThlZjQwYWM5ZmJjZTk3ZTM=")
+          
+            response = urllib2.urlopen(req, '')
+            json_source = json.load(response)   
+            access_token = json_source['access_token']
+            response.close()
+
+            #Login
             url = 'https://activation-rogers.svc.nhl.com/ws/subscription/flow/rogers.login-check'            
             login_data = '{"rogerCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
             req = urllib2.Request(url, data=login_data,
@@ -460,6 +476,7 @@ def login():
                             "Content-Type": "application/json",                            
                             "Origin": "https://www.nhl.com",
                             "Connection": "keep-alive",
+                            "Authorization": access_token,
                             "Referer": "https://www.nhl.com/login/rogers",
                             "User-Agent": UA_PC})
         else:
