@@ -446,20 +446,34 @@ def login():
         settings.setSetting(id='password', value=PASSWORD)
 
    
-    if USERNAME != '' and PASSWORD != '':        
+    if USERNAME != '' and PASSWORD != '':                
         cj = cookielib.LWPCookieJar(os.path.join(ADDON_PATH_PROFILE, 'cookies.lwp'))       
-        url = 'https://gateway.web.nhl.com/ws/subscription/flow/nhlPurchase.login'
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))            
-        
-        login_data = '{"nhlCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
-        req = urllib2.Request(url, data=login_data,
-              headers={"Accept": "*/*",
-                        "Accept-Encoding": "gzip, deflate",
-                        "Accept-Language": "en-US,en;q=0.8",
-                        "Content-Type": "application/json",                            
-                        "Origin": "https://www.nhl.com",
-                        "Connection": "keep-alive",
-                        "User-Agent": UA_PC})
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))   
+
+        if ROGERS_SUBSCRIBER == 'true':
+            url = 'https://activation-rogers.svc.nhl.com/ws/subscription/flow/rogers.login-check'            
+            login_data = '{"rogerCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
+            req = urllib2.Request(url, data=login_data,
+                  headers={"Accept": "*/*",
+                            "Accept-Encoding": "gzip, deflate",
+                            "Accept-Language": "en-US,en;q=0.8",
+                            "Content-Type": "application/json",                            
+                            "Origin": "https://www.nhl.com",
+                            "Connection": "keep-alive",
+                            "Referer": "https://www.nhl.com/login/rogers",
+                            "User-Agent": UA_PC})
+        else:
+            url = 'https://gateway.web.nhl.com/ws/subscription/flow/nhlPurchase.login'
+            login_data = '{"nhlCredentials":{"email":"'+USERNAME+'","password":"'+PASSWORD+'"}}'
+            req = urllib2.Request(url, data=login_data,
+                  headers={"Accept": "*/*",
+                            "Accept-Encoding": "gzip, deflate",
+                            "Accept-Language": "en-US,en;q=0.8",
+                            "Content-Type": "application/json",                            
+                            "Origin": "https://www.nhl.com",
+                            "Connection": "keep-alive",
+                            "User-Agent": UA_PC})
+
         response = opener.open(req)              
         user_data = response.read()
         response.close()
@@ -593,7 +607,7 @@ elif mode == 300:
     quickPicks()
 
 elif mode == 400:
-    logout()
+    logout()    
 
 elif mode == 999:
     sys.exit()
@@ -601,7 +615,7 @@ elif mode == 999:
 
 if mode == 100:
     xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=False)
-elif mode == 101 or mode == 400:
+elif mode == 101:
     xbmcplugin.endOfDirectory(addon_handle, cacheToDisc=False, updateListing=True)
 else:
     xbmcplugin.endOfDirectory(addon_handle)
